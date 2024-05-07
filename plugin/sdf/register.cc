@@ -17,6 +17,9 @@
 #include "gear.h"
 #include "nut.h"
 #include "torus.h"
+#include "socket.h"
+#include "sqsocket.h"
+#include "sqsocketshell.h"
 #include "sdflib.h"
 
 namespace mujoco::plugin::sdf {
@@ -27,6 +30,9 @@ mjPLUGIN_LIB_INIT {
   Gear::RegisterPlugin();
   Nut::RegisterPlugin();
   Torus::RegisterPlugin();
+  Socket::RegisterPlugin();
+  SqSocket::RegisterPlugin();
+  SqSocketShell::RegisterPlugin();
   SdfLib::RegisterPlugin();
 }
 

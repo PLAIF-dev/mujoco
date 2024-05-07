@@ -32,6 +32,12 @@ set(MUJOCO_SDF_SRCS
     sdflib.h
     torus.cc
     torus.h
+    socket.cc
+    socket.h
+    sqsocket.cc
+    sqsocket.h
+    sqsocketshell.cc
+    sqsocketshell.h
 )
 
 add_library(sdf SHARED)
