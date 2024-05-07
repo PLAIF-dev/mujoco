@@ -28,58 +28,58 @@ namespace {
 
 
 static float opOnion(const mjtNum d1, const mjtNum thickness) {
-    return mju_abs(d1) - thickness;
+  return mju_abs(d1) - thickness;
 }
 
 
 inline mjtNum opSubtraction(mjtNum a, mjtNum b) {
-    return mju_max(-a, b);
+  return mju_max(-a, b);
 }
 
 
 static mjtNum sdCappedCylinder(const mjtNum p[3], mjtNum h, mjtNum r) {
-    mjtNum pxy[2] = {p[0], p[2]};
-    mjtNum d[2] = {mju_norm(pxy, 2) - r, mju_abs(p[1]) - h};
-    mjtNum d0_capped = mju_max(d[0], 0.0), d1_capped = mju_max(d[1], 0.0);
-    return mju_min(mju_max(d[0], d[1]), 0.0) + mju_sqrt(d0_capped * d0_capped + d1_capped * d1_capped);
+  mjtNum pxy[2] = {p[0], p[2]};
+  mjtNum d[2] = {mju_norm(pxy, 2) - r, mju_abs(p[1]) - h};
+  mjtNum d0Capped = mju_max(d[0], 0.0), d1Capped = mju_max(d[1], 0.0);
+  return mju_min(mju_max(d[0], d[1]), 0.0) + mju_sqrt(d0Capped * d0Capped + d1Capped * d1Capped);
 }
 
 
 static mjtNum sdRoundBox(const mjtNum p[3], const mjtNum b[3], mjtNum r) {
-    const mjtNum q[3] = {mju_abs(p[0]) - b[0], mju_abs(p[1]) - b[1], mju_abs(p[2]) - b[2]};
-    const mjtNum cappedQ[3] = {mju_max(q[0], 0.0), mju_max(q[1], 0.0), mju_max(q[2], 0.0)} ;
-    return mju_norm3(cappedQ) + mju_min(mju_max(q[0], mju_max(q[1], q[2])), 0.0);
+  const mjtNum q[3] = {mju_abs(p[0]) - b[0], mju_abs(p[1]) - b[1], mju_abs(p[2]) - b[2]};
+  const mjtNum cappedQ[3] = {mju_max(q[0], 0.0), mju_max(q[1], 0.0), mju_max(q[2], 0.0)} ;
+  return mju_norm3(cappedQ) + mju_min(mju_max(q[0], mju_max(q[1], q[2])), 0.0);
 }
 
 
 static mjtNum distance(const mjtNum p[3], const mjtNum attrs[11]) {
-    mjtNum box_x = attrs[0];
-    mjtNum box_y = attrs[1];
-    mjtNum box_z = attrs[2];
-    mjtNum box_rounding = attrs[3];
-    mjtNum hole_xpos = attrs[4];
-    mjtNum hole_ypos = attrs[5];
-    mjtNum hole_height = attrs[6];
-    mjtNum hole_radius = attrs[7];
-    mjtNum sqsocket_conn_radius = attrs[8];
-    mjtNum sqsocket_conn_height = attrs[9];
-    mjtNum sqsocket_conn_offset = attrs[10];
-    
-    mjtNum box_offset[3] = {box_x, box_y, box_z};
-    mjtNum body_box =  sdRoundBox(p, box_offset, box_rounding); //sdCappedCylinder(p, bh, br);
+  mjtNum bx = attrs[0];    // Box x width (half, as it extends in both directions from the origin)
+  mjtNum by = attrs[1];    // Box y height (half)
+  mjtNum bz = attrs[2];    // Box z depth (half)
+  mjtNum br = attrs[3];    // Box rounding
+  mjtNum cx = attrs[4];    // Cup x position
+  mjtNum cy = attrs[5];    // Cup y position
+  mjtNum ch = attrs[6];    // Cup height
+  mjtNum cr = attrs[7];    // Cup radius
+  mjtNum shr = attrs[8];   // socket hole radius
+  mjtNum shh = attrs[9];   // socket hole height
+  mjtNum sho = attrs[10];  // socket hole offset (from the center of the body)
+  
+  mjtNum boxOffset[3] = {bx, by, bz};
+  mjtNum bodyBox =  sdRoundBox(p, boxOffset, br);
 
-    mjtNum hole_pos[3] = {p[0] - hole_xpos, p[1] - box_y, p[2] - hole_ypos};
-    mjtNum hole = sdCappedCylinder(hole_pos, hole_height, hole_radius);
-    
-    mjtNum left_conn_pos[3] = {hole_pos[0], hole_pos[1] + hole_height, hole_pos[2] + sqsocket_conn_offset};
-    mjtNum sqsocket_left = sdCappedCylinder(left_conn_pos, sqsocket_conn_height, sqsocket_conn_radius);
-    
-    mjtNum right_conn_pos[3] = {hole_pos[0] , hole_pos[1] + hole_height, hole_pos[2] - sqsocket_conn_offset};
-    mjtNum sqsocket_right = sdCappedCylinder(right_conn_pos, sqsocket_conn_height, sqsocket_conn_radius);
+  mjtNum cupPos[3] = {p[0] - cy, p[1] - by, p[2] - cy};
+  mjtNum cup = sdCappedCylinder(cupPos, ch, cr);
+  
+  mjtNum leftHolePos[3] = {cupPos[0], cupPos[1] + ch, cupPos[2] + sho};
+  mjtNum leftHole = sdCappedCylinder(leftHolePos, shh, shr);
+  
+  mjtNum rightHolePos[3] = {cupPos[0] , cupPos[1] + ch, cupPos[2] - sho};
+  mjtNum rightHole = sdCappedCylinder(rightHolePos, shh, shr);
 
-    mjtNum dist = Subtraction(body_box, Union(hole, Union(sqsocket_left, sqsocket_right)));
-    
-    return dist;
+  mjtNum dist = Subtraction(bodyBox, Union(cup, Union(leftHole, rightHole)));
+  
+  return dist;
 }
 
 

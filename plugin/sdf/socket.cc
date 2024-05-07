@@ -26,59 +26,52 @@
 namespace mujoco::plugin::sdf {
 namespace {
 
+
 static float opOnion(const mjtNum d1, const mjtNum thickness) {
-    return mju_abs(d1) - thickness;
+  return mju_abs(d1) - thickness;
 }
+
 
 inline mjtNum opSubtraction(mjtNum a, mjtNum b) {
-    return mju_max(-a, b);
+  return mju_max(-a, b);
 }
 
 
-// BUG: when h > r, the cylinder is not capped
+// BUG: when h > r, the cylinder is not capped (Probably due to Mujoco itself)
 static float sdCappedCylinder(const mjtNum p[3], mjtNum h, mjtNum r) {
-    mjtNum pxy[2] = {p[0], p[1]};
-    mjtNum d[2] = {mju_norm(pxy, 2) - r, mju_abs(p[2]) - h};
-    mjtNum d0_capped = mju_max(d[0], 0.0), d1_capped = mju_max(d[1], 0.0);
-    return mju_min(mju_max(d[0], d[1]), 0.0) + mju_sqrt(d0_capped * d0_capped + d1_capped * d1_capped);
+  mjtNum pxy[2] = {p[0], p[1]};
+  mjtNum d[2] = {mju_norm(pxy, 2) - r, mju_abs(p[2]) - h};
+  mjtNum d0Capped = mju_max(d[0], 0.0), d1Capped = mju_max(d[1], 0.0);
+  return mju_min(mju_max(d[0], d[1]), 0.0) + mju_sqrt(d0Capped * d0Capped + d1Capped * d1Capped);
 }
 
 
-// port above shadertoy to mujoco
 static mjtNum distance(const mjtNum p[3], const mjtNum attrs[8]) {
-    mjtNum bh = attrs[0];
-    mjtNum br = attrs[1];
-    mjtNum uh = attrs[2];
-    mjtNum uor = attrs[3];
-    mjtNum uir = attrs[4];
-    mjtNum shr = attrs[5];
-    mjtNum shh = attrs[6];
-    mjtNum sho = attrs[7];
-    
-    
-    mjtNum bottomCylinder =  sdCappedCylinder(p, br, br); //sdCappedCylinder(p, bh, br);
+  mjtNum bh = attrs[0];  // bottom body height
+  mjtNum br = attrs[1];  // bottom body radius
+  mjtNum uh = attrs[2];  // upper body height
+  mjtNum uor = attrs[3];  // upper body outer radius
+  mjtNum uir = attrs[4];  // upper body inner radius
+  mjtNum shr = attrs[5];  // socket hole radius
+  mjtNum shh = attrs[6];  // socket hole height
+  mjtNum sho = attrs[7];  // socket hole offset (from the center of the body)
+  
+  mjtNum bottomCylinder =  sdCappedCylinder(p, br, br);
 
-    mjtNum p2[3] = {p[0], p[1], p[2]-bh};
-    mjtNum upperOnionCylinder = mju_max(
-        mju_max(
-            opOnion(
-                sdCappedCylinder(p2, uh, uor),
-                uor - uir),
-            -1.0),
-        -1.0);
-    mjtNum p3[3] = {p[0], p[1]  + sho, p[2] - bh};
-    mjtNum socket_left = sdCappedCylinder(p3, shh + bh, shr);
-    
-    mjtNum p4[3] = {p[0] , p[1] - sho, p[2] - bh};
-    mjtNum socket_right = sdCappedCylinder(p4, shh + bh, shr);
+  mjtNum p2[3] = {p[0], p[1], p[2]-bh};
+  mjtNum upperOnionCylinder = opOnion(sdCappedCylinder(p2, uh, uor), uor - uir);
+  mjtNum p3[3] = {p[0], p[1]  + sho, p[2] - bh};
+  mjtNum socketLeft = sdCappedCylinder(p3, shh + bh, shr);
+  
+  mjtNum p4[3] = {p[0] , p[1] - sho, p[2] - bh};
+  mjtNum socketRight = sdCappedCylinder(p4, shh + bh, shr);
 
+  mjtNum dist = opSubtraction(
+    Union(socketLeft, socketRight),
+    Union(upperOnionCylinder, bottomCylinder)
+  );
 
-    mjtNum dist = opSubtraction(
-      Union(socket_left, socket_right),
-      Union(upperOnionCylinder, bottomCylinder)
-    );
-
-    return dist;
+  return dist;
 }
 
 

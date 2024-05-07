@@ -28,36 +28,37 @@ namespace {
 
 
 inline mjtNum opSubtraction(mjtNum a, mjtNum b) {
-    return mju_max(-a, b);
+  return mju_max(-a, b);
 }
 
 
 static mjtNum sdRoundBox(const mjtNum p[3], const mjtNum b[3], mjtNum r) {
-    const mjtNum q[3] = {mju_abs(p[0]) - b[0], mju_abs(p[1]) - b[1], mju_abs(p[2]) - b[2]};
-    const mjtNum cappedQ[3] = {mju_max(q[0], 0.0), mju_max(q[1], r), mju_max(q[2], 0.0)} ;
-    return mju_norm3(cappedQ) + mju_min(mju_max(q[0], mju_max(q[1], q[2])), 0.0) - r;
+  const mjtNum q[3] = {mju_abs(p[0]) - b[0], mju_abs(p[1]) - b[1], mju_abs(p[2]) - b[2]};
+  const mjtNum cappedQ[3] = {mju_max(q[0], 0.0), mju_max(q[1], r), mju_max(q[2], 0.0)} ;
+  return mju_norm3(cappedQ) + mju_min(mju_max(q[0], mju_max(q[1], q[2])), 0.0) - r;
 }
 
 
 static mjtNum distance(const mjtNum p[3], const mjtNum attrs[8]) {
-    mjtNum outbox_x = attrs[0];
-    mjtNum outbox_y = attrs[1];
-    mjtNum outbox_z = attrs[2];
-    mjtNum outbox_rounding = attrs[3];
-    mjtNum inbox_x = attrs[4];
-    mjtNum inbox_y = attrs[5];
-    mjtNum inbox_z = attrs[6];
-    mjtNum inbox_rounding = attrs[7];
-    
-    mjtNum outbox_offset[3] = {outbox_x, outbox_y, outbox_z};
-    mjtNum outbox = sdRoundBox(p, outbox_offset, outbox_rounding); //sdCappedCylinder(p, bh, br);
+  // All box lengths are half, as they extend in both directions from the origin
+  mjtNum ox = attrs[0];  // Outer box x width
+  mjtNum oy = attrs[1];  // Outer box y height 
+  mjtNum oz = attrs[2];  // Outer box z depth
+  mjtNum or_ = attrs[3];  // Outer box rounding
+  mjtNum ix = attrs[4];  // Inner box x width
+  mjtNum iy = attrs[5];  // Inner box y height
+  mjtNum iz = attrs[6];  // Inner box z depth
+  mjtNum ir = attrs[7];  // Inner box rounding
+  
+  mjtNum outboxOffset[3] = {ox, oy, oz};
+  mjtNum outbox = sdRoundBox(p, outboxOffset, or_); //sdCappedCylinder(p, bh, br);
 
-    mjtNum inbox_offset[3] = {inbox_x, inbox_y, inbox_z};
-    mjtNum inbox = sdRoundBox(p, inbox_offset, inbox_rounding); //sdCappedCylinder(p, bh, br);
+  mjtNum inboxOffset[3] = {ix, iy, iz};
+  mjtNum inbox = sdRoundBox(p, inboxOffset, ir); //sdCappedCylinder(p, bh, br);
 
-    mjtNum dist = Subtraction(outbox, inbox);
-    
-    return dist;
+  mjtNum dist = Subtraction(outbox, inbox);
+  
+  return dist;
 }
 
 
