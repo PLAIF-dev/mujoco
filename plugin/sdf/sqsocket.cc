@@ -68,7 +68,7 @@ static mjtNum distance(const mjtNum p[3], const mjtNum attrs[11]) {
   mjtNum boxOffset[3] = {bx, by, bz};
   mjtNum bodyBox =  sdRoundBox(p, boxOffset, br);
 
-  mjtNum cupPos[3] = {p[0] - cy, p[1] - by, p[2] - cy};
+  mjtNum cupPos[3] = {p[0] - cx, p[1] - by, p[2] - cy};
   mjtNum cup = sdCappedCylinder(cupPos, ch, cr);
   
   mjtNum leftHolePos[3] = {cupPos[0], cupPos[1] + ch, cupPos[2] + sho};
