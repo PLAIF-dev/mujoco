@@ -27,11 +27,6 @@ namespace mujoco::plugin::sdf {
 namespace {
 
 
-static float opOnion(const mjtNum d1, const mjtNum thickness) {
-  return mju_abs(d1) - thickness;
-}
-
-
 inline mjtNum opSubtraction(mjtNum a, mjtNum b) {
   return mju_max(-a, b);
 }
